@@ -81,6 +81,7 @@ fn tick(
     //begin_frame(xr_context, vulkan_context, render_context);
     engine.begin_frame();
 
+    /*
     let xr_context = &mut engine.xr_context;
     let vulkan_context = &engine.vulkan_context;
     let render_context = &mut engine.render_context;
@@ -88,94 +89,101 @@ fn tick(
     let gui_context = &mut engine.gui_context;
     let haptic_context = &mut engine.haptic_context;
     let audio_context = &mut engine.audio_context;
+    */
 
     handle_state_change(
         previous_state,
         current_state,
-        audio_context,
+        &mut engine.audio_context,
         game_context,
         world,
     );
 
-    // Core logic tasks - these are only necessary when in a FOCUSSED state.
-    // Refactor to: match current_state {
-    if current_state == xr::SessionState::FOCUSED {
-        // Handle input
-        sabers_system(
-            &mut crab_saber_queries.sabers_query,
-            world,
-            xr_context,
-            physics_context,
-        );
-        pointers_system(
-            &mut hotham_queries.pointers_query,
-            world,
-            xr_context,
-            physics_context,
-        );
-
-        // Physics
-        physics_step(physics_context);
-        collision_system(&mut hotham_queries.collision_query, world, physics_context);
-
-        // Game logic
-        game_system(
-            crab_saber_queries,
-            world,
-            game_context,
-            audio_context,
-            physics_context,
-            haptic_context,
-        );
-
-        // Update the world
-        update_rigid_body_transforms_system(
-            &mut hotham_queries.update_rigid_body_transforms_query,
-            world,
-            physics_context,
-        );
-        update_transform_matrix_system(&mut hotham_queries.update_transform_matrix_query, world);
-        update_parent_transform_matrix_system(
-            &mut hotham_queries.parent_query,
-            &mut hotham_queries.roots_query,
-            world,
-        );
-
-        // Draw GUI
-        draw_gui_system(
-            &mut hotham_queries.draw_gui_query,
-            world,
-            vulkan_context,
-            &xr_context.frame_index,
-            render_context,
-            gui_context,
-            haptic_context,
-        );
-
-        // Haptics
-        apply_haptic_feedback(xr_context, haptic_context);
-
-        // Audio
-        audio_system(
-            &mut hotham_queries.audio_query,
-            world,
-            audio_context,
-            physics_context,
-            xr_context,
-        );
-    }
-
-    // Rendering tasks - only necessary if we are in at least the visible state
-    if current_state == xr::SessionState::VISIBLE || current_state == xr::SessionState::FOCUSED {
-        begin_pbr_renderpass(xr_context, vulkan_context, render_context);
-        rendering_system(
-            &mut hotham_queries.rendering_query,
-            world,
-            vulkan_context,
-            xr_context.frame_index,
-            render_context,
-        );
-        end_pbr_renderpass(xr_context, vulkan_context, render_context);
+    match current_state {
+        xr::SessionState::FOCUSED => {
+            sabers_system(
+                &mut crab_saber_queries.sabers_query,
+                world,
+                &engine.xr_context,
+                &mut engine.physics_context,
+            );
+            pointers_system(
+                &mut hotham_queries.pointers_query,
+                world,
+                &engine.xr_context,
+                &mut engine.physics_context,
+            );
+            engine.physics_step();
+            collision_system(
+                &mut hotham_queries.collision_query,
+                world,
+                &mut engine.physics_context,
+            );
+            game_system(
+                crab_saber_queries,
+                world,
+                game_context,
+                &mut engine.audio_context,
+                &mut engine.physics_context,
+                &mut engine.haptic_context,
+            );
+            // Update the world
+            update_rigid_body_transforms_system(
+                &mut hotham_queries.update_rigid_body_transforms_query,
+                world,
+                &mut engine.physics_context,
+            );
+            update_transform_matrix_system(
+                &mut hotham_queries.update_transform_matrix_query,
+                world,
+            );
+            update_parent_transform_matrix_system(
+                &mut hotham_queries.parent_query,
+                &mut hotham_queries.roots_query,
+                world,
+            );
+            // Draw GUI
+            draw_gui_system(
+                &mut hotham_queries.draw_gui_query,
+                world,
+                &engine.vulkan_context,
+                &engine.xr_context.frame_index,
+                &engine.render_context,
+                &mut engine.gui_context,
+                &mut engine.haptic_context,
+            );
+            // Haptics
+            engine.apply_haptic_feedback();
+            // Audio
+            audio_system(
+                &mut hotham_queries.audio_query,
+                world,
+                &mut engine.audio_context,
+                &engine.physics_context,
+                &engine.xr_context,
+            );
+            engine.begin_pbr_renderpass();
+            rendering_system(
+                &mut hotham_queries.rendering_query,
+                world,
+                &engine.vulkan_context,
+                engine.xr_context.frame_index,
+                &engine.render_context,
+            );
+            engine.end_pbr_renderpass();
+        }
+        xr::SessionState::VISIBLE => {
+            engine.begin_pbr_renderpass();
+            rendering_system(
+                &mut hotham_queries.rendering_query,
+                world,
+                &engine.vulkan_context,
+                engine.xr_context.frame_index,
+                &engine.render_context,
+            );
+            engine.end_pbr_renderpass();
+        }
+        _ => {}
     }
 
     // End the frame

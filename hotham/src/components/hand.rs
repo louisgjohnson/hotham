@@ -24,6 +24,15 @@ pub struct Hand {
 }
 
 impl Hand {
+    /// Shortcut helper to create a hand
+    pub fn new(handedness: Handedness) -> Hand {
+        Hand {
+            grip_value: 0.0,
+            handedness,
+            grabbed_entity: None,
+        }
+    }
+
     /// Shortcut helper to create a Left hand
     pub fn left() -> Hand {
         Hand {

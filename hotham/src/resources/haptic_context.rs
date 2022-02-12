@@ -9,6 +9,11 @@ pub struct HapticContext {
     pub right_hand_amplitude_this_frame: f32,
 }
 
+pub struct Haptic {
+    pub hand: Handedness,
+    pub amplitude_this_frame: f32,
+}
+
 impl HapticContext {
     /// Request haptics be applied this frame
     pub fn request_haptic_feedback(&mut self, amplitude: f32, handedness: Handedness) {
@@ -25,4 +30,25 @@ impl HapticContext {
             }
         }
     }
+
+    pub fn iter_mut(&mut self) -> std::vec::IntoIter<&mut f32> {
+        vec![
+            &mut self.left_hand_amplitude_this_frame,
+            &mut self.right_hand_amplitude_this_frame,
+        ]
+        .into_iter()
+    }
 }
+/*
+impl IntoIterator for HapticContext {
+    type Item = f32;
+    type IntoIter = std::array::IntoIter<f32, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::array::IntoIter::new([
+            self.left_hand_amplitude_this_frame,
+            self.right_hand_amplitude_this_frame,
+        ])
+    }
+}
+*/

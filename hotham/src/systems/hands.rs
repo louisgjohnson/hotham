@@ -92,16 +92,7 @@ pub fn add_hand(
     .unwrap();
     {
         // Add a hand component
-        world
-            .insert_one(
-                hand,
-                Hand {
-                    grip_value: 0.,
-                    handedness,
-                    grabbed_entity: None,
-                },
-            )
-            .unwrap();
+        world.insert_one(hand, Hand::new(handedness)).unwrap();
 
         // Modify the animation controller
         let mut animation_controller = world.get_mut::<AnimationController>(hand).unwrap();
@@ -195,7 +186,7 @@ mod tests {
         let mut animation_controller = AnimationController::default();
         animation_controller.blend_amount = 100.0; // bogus value
 
-        let mut hand = Hand::left();
+        let mut hand = Hand::new(Handedness::Left);
         hand.grip_value = 100.0; // bogus value
         hand.grabbed_entity = grabbed_entity;
         let hand = world.spawn((animation_controller, hand, Transform::default()));

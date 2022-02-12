@@ -3,6 +3,7 @@ use crate::{
         AudioContext, GuiContext, HapticContext, PhysicsContext, RenderContext, VulkanContext,
         XrContext,
     },
+    util::is_view_valid,
     HothamError, HothamResult, VIEW_TYPE,
 };
 use openxr as xr;
@@ -16,7 +17,10 @@ use std::{
     time::Duration,
 };
 
-use xr::{ActiveActionSet, EventDataBuffer, SessionState};
+use xr::{ActiveActionSet, EventDataBuffer, HapticVibration, SessionState};
+
+static HAPTIC_FREQUENCY: f32 = 400.;
+static HAPTIC_DURATION: i64 = 1e+8 as _; // 100ms
 
 #[cfg(target_os = "android")]
 pub static ANDROID_LOOPER_ID_MAIN: u32 = 0;
@@ -180,6 +184,104 @@ impl Engine {
         }
         self.xr_context.end_frame().unwrap();
     }
+
+    // STUB OUT, need world and hotham_queries
+    /*
+    pub fn pbr_renderpass(&mut self) {
+        self.begin_pbr_renderpass();
+        rendering_system(
+            &mut hotham_queries.rendering_query,
+            world,
+            &self.vulkan_context,
+            self.xr_context.frame_index,
+            &self.render_context,
+        );
+        self.end_pbr_renderpass();
+    }
+    */
+
+    /// TODO DOCUMENTATION
+    pub fn begin_pbr_renderpass(&mut self) {
+        // Check if we should be rendering.
+        if !self.xr_context.frame_state.should_render {
+            println!(
+                "[HOTHAM_BEGIN_PBR_RENDERPASS] - Session is running but shouldRender is false - not rendering"
+            );
+            return;
+        }
+
+        // If we have a valid view from OpenXR, update the scene buffers with the view data.
+        if is_view_valid(&self.xr_context.view_state_flags) {
+            let views = &self.xr_context.views;
+
+            // Update uniform buffers
+            self.render_context
+                .update_scene_data(&views, &self.vulkan_context)
+                .unwrap();
+        }
+
+        // TODO: This begs the question: what if we never get a valid view from OpenXR..?
+
+        // Begin the renderpass.
+        self.render_context
+            .begin_pbr_render_pass(&self.vulkan_context, self.xr_context.frame_index);
+        // ..and we're off!
+    }
+
+    /// TODO DOCUMENTATION
+    pub fn end_pbr_renderpass(&mut self) {
+        // Check if we should be rendering.
+        if !self.xr_context.frame_state.should_render {
+            println!(
+                "[HOTHAM_END_PBR_RENDERPASS] - Session is running but shouldRender is false - not rendering"
+            );
+            return;
+        }
+
+        self.render_context
+            .end_pbr_render_pass(&self.vulkan_context, self.xr_context.frame_index);
+    }
+
+    /// TODO Documenta
+    // TODO: We may want to adjust this so that the tick time is synced with OpenXR
+    pub fn physics_step(&mut self) -> () {
+        self.physics_context.update();
+    }
+
+    /// Triggers the application of vibrations to the appropriate user input device at prescribed amplitude, frequency,
+    /// and duration given a Hothman::resources::XrContent and Hothman::resources::HapticContext.
+    ///
+    /// During each tick of the Hotham engine, haptic feedback is applied to generate a HapticVibration
+    /// event which proprogates to the appropriate user input device.
+    ///
+    /// Basic usage:
+    /// ```ignore
+    /// fn tick (...) {
+    ///    engine.apply_haptic_feedback()
+    /// }
+    /// ```
+    pub fn apply_haptic_feedback(&mut self) {
+        let haptic_duration = xr::Duration::from_nanos(HAPTIC_DURATION);
+        for hand_amplitude in self.haptic_context.iter_mut() {
+            if *hand_amplitude != 0. {
+                let event = HapticVibration::new()
+                    .amplitude(*hand_amplitude)
+                    .frequency(HAPTIC_FREQUENCY)
+                    .duration(haptic_duration);
+
+                self.xr_context
+                    .haptic_feedback_action
+                    .apply_feedback(
+                        &self.xr_context.session,
+                        self.xr_context.left_hand_subaction_path, //TODO
+                        &event,
+                    )
+                    .expect("Unable to apply haptic feedback!");
+
+                *hand_amplitude = 0.;
+            }
+        }
+    }
 }
 
 #[cfg(target_os = "android")]
@@ -244,5 +346,14 @@ mod tests {
         let mut engine = Engine::new();
         engine.begin_frame();
         engine.end_frame();
+    }
+
+    /// Simple smoke test.
+    #[test]
+    pub fn apply_haptic_feedback_test() {
+        let (mut xr_context, _) = XrContext::new().unwrap();
+        let mut haptic_context = HapticContext::default();
+
+        apply_haptic_feedback(&mut xr_context, &mut haptic_context);
     }
 }
