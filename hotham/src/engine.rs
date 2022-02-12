@@ -225,29 +225,24 @@ pub fn poll_android_events(resumed: bool) -> Option<ndk_glue::Event> {
     }
 }
 
-/*#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 #[cfg(test)]
 mod tests {
-    use crate::resources::{RenderContext, XrContext};
-
-    use super::begin_frame;
+    use super::Engine;
 
     #[test]
-
     pub fn test_begin_frame() {
-        let (mut xr_context, vulkan_context) = XrContext::new().unwrap();
-        let render_context = RenderContext::new(&vulkan_context, &xr_context).unwrap();
-        xr_context.frame_index = 100;
+        let mut engine = Engine::new();
+        engine.xr_context.frame_index = 100;
+        engine.begin_frame();
 
-        begin_frame(&mut xr_context, &vulkan_context, &render_context);
-        assert_eq!(xr_context.frame_index, 0);
+        assert_eq!(engine.xr_context.frame_index, 0);
     }
 
     #[test]
     pub fn test_end_frame() {
-        let (mut xr_context, vulkan_context) = XrContext::new().unwrap();
-        let mut render_context = RenderContext::new(&vulkan_context, &xr_context).unwrap();
-        begin_frame(&mut xr_context, &vulkan_context, &render_context);
-        end_frame(&mut xr_context, &vulkan_context, &mut render_context);
+        let mut engine = Engine::new();
+        engine.begin_frame();
+        engine.end_frame();
     }
-}*/
+}
