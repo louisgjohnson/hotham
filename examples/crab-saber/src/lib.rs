@@ -61,6 +61,7 @@ fn tick(
     crab_saber_queries: &mut CrabSaberQueries,
     game_context: &mut GameContext,
 ) {
+    /*
     let xr_context = &mut engine.xr_context;
     let vulkan_context = &engine.vulkan_context;
     let render_context = &mut engine.render_context;
@@ -68,6 +69,7 @@ fn tick(
     let gui_context = &mut engine.gui_context;
     let haptic_context = &mut engine.haptic_context;
     let audio_context = &mut engine.audio_context;
+    */
 
     // If we're not in a session, don't run the frame loop.
     match current_state {
@@ -76,7 +78,16 @@ fn tick(
     }
 
     // Frame start
-    begin_frame(xr_context, vulkan_context, render_context);
+    //begin_frame(xr_context, vulkan_context, render_context);
+    engine.begin_frame();
+
+    let xr_context = &mut engine.xr_context;
+    let vulkan_context = &engine.vulkan_context;
+    let render_context = &mut engine.render_context;
+    let physics_context = &mut engine.physics_context;
+    let gui_context = &mut engine.gui_context;
+    let haptic_context = &mut engine.haptic_context;
+    let audio_context = &mut engine.audio_context;
 
     handle_state_change(
         previous_state,
@@ -87,6 +98,7 @@ fn tick(
     );
 
     // Core logic tasks - these are only necessary when in a FOCUSSED state.
+    // Refactor to: match current_state {
     if current_state == xr::SessionState::FOCUSED {
         // Handle input
         sabers_system(
@@ -167,7 +179,8 @@ fn tick(
     }
 
     // End the frame
-    end_frame(xr_context, vulkan_context, render_context);
+    //end_frame(xr_context, vulkan_context, render_context);
+    engine.end_frame();
 }
 
 fn handle_state_change(
