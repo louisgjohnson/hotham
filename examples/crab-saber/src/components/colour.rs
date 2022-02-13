@@ -14,3 +14,12 @@ impl From<Handedness> for Colour {
         }
     }
 }
+
+impl Into<Handedness> for Colour {
+    fn into(self) -> Handedness {
+        match self {
+            Colour::Red => Handedness::Left,
+            Colour::Blue => Handedness::Right,
+        }
+    }
+}

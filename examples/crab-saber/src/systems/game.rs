@@ -258,51 +258,30 @@ fn check_for_hits(
     let mut pending_sound_effects = Vec::new();
     let mut cubes_to_dispose = Vec::new();
 
+    [game_context.blue_saber, game_context.red_saber].map(|saber| {
+        if let Some(saber_colour) = world.entity(saber).unwrap().get::<Colour>() {
+            let saber_collider = world.get::<Collider>(saber).unwrap();
+            for c in &saber_collider.collisions_this_frame {
+                let e = world.entity(*c).unwrap();
+                if !is_cube(e) {
+                    continue;
+                };
+                if let Some(cube_colour) = e.get::<Colour>() {
+                    if *cube_colour == *saber_colour {
+                        game_context.current_score += 1;
+                        pending_sound_effects.push((c.clone(), "Hit"));
+                    } else {
+                        game_context.current_score -= 1;
+                        pending_sound_effects.push((c.clone(), "Miss"));
+                    }
+                }
+                haptic_context.request_haptic_feedback(1., (*saber_colour).into());
+                cubes_to_dispose.push(c.clone());
+            }
+        }
+    });
+
     {
-        let blue_saber_collider = world.get::<Collider>(game_context.blue_saber).unwrap();
-        for c in &blue_saber_collider.collisions_this_frame {
-            let e = world.entity(*c).unwrap();
-            if !is_cube(e) {
-                continue;
-            };
-            if let Some(colour) = e.get::<Colour>() {
-                match *colour {
-                    Colour::Red => {
-                        game_context.current_score -= 1;
-                        pending_sound_effects.push((c.clone(), "Miss"));
-                    }
-                    Colour::Blue => {
-                        game_context.current_score += 1;
-                        pending_sound_effects.push((c.clone(), "Hit"));
-                    }
-                }
-                haptic_context.request_haptic_feedback(1., Handedness::Right);
-                cubes_to_dispose.push(c.clone());
-            }
-        }
-
-        let red_saber_collider = world.get::<Collider>(game_context.red_saber).unwrap();
-        for c in &red_saber_collider.collisions_this_frame {
-            let e = world.entity(*c).unwrap();
-            if !is_cube(e) {
-                continue;
-            };
-            if let Some(colour) = e.get::<Colour>() {
-                match *colour {
-                    Colour::Red => {
-                        game_context.current_score += 1;
-                        pending_sound_effects.push((c.clone(), "Hit"));
-                    }
-                    Colour::Blue => {
-                        game_context.current_score -= 1;
-                        pending_sound_effects.push((c.clone(), "Miss"));
-                    }
-                }
-                haptic_context.request_haptic_feedback(1., Handedness::Left);
-                cubes_to_dispose.push(c.clone());
-            }
-        }
-
         let backstop_collider = world.get::<Collider>(game_context.backstop).unwrap();
         for c in &backstop_collider.collisions_this_frame {
             let e = world.entity(*c).unwrap();
