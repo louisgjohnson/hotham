@@ -176,6 +176,8 @@ pub struct RightInputContext {
     a_button_prev: bool,
     b_button: bool,
     b_button_prev: bool,
+    menu_button: bool,
+    menu_button_prev: bool,
     grip_button: bool,
     grip_button_prev: bool,
     trigger_button: bool,
@@ -359,6 +361,7 @@ impl InputContext {
 
         self.right.a_button_prev = self.right.a_button;
         self.right.b_button_prev = self.right.b_button;
+        self.right.menu_button_prev = self.right.menu_button;
         self.right.grip_button_prev = self.right.grip_button;
         self.right.trigger_button_prev = self.right.trigger_button;
         self.right.thumbstick_click_prev = self.right.thumbstick_click;
@@ -379,7 +382,7 @@ impl InputContext {
                 .unwrap()
                 .current_state;
         self.left.menu_button =
-            xr::ActionInput::get(&input.menu_button_action, session, left_subaction_path)
+            xr::ActionInput::get(&input.left_menu_button_action, session, left_subaction_path)
                 .unwrap()
                 .current_state;
         self.left.thumbstick_click =
@@ -450,6 +453,13 @@ impl InputContext {
             xr::ActionInput::get(&input.b_button_action, session, right_subaction_path)
                 .unwrap()
                 .current_state;
+        self.right.menu_button = xr::ActionInput::get(
+            &input.right_menu_button_action,
+            session,
+            right_subaction_path,
+        )
+        .unwrap()
+        .current_state;
         self.right.thumbstick_click = xr::ActionInput::get(
             &input.thumbstick_click_action,
             session,

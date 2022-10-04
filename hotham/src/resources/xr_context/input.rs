@@ -13,11 +13,12 @@ pub struct Input {
     pub x_touch_action: Action<bool>,
     pub y_button_action: Action<bool>,
     pub y_touch_action: Action<bool>,
-    pub menu_button_action: Action<bool>,
+    pub left_menu_button_action: Action<bool>,
     pub a_button_action: Action<bool>,
     pub a_touch_action: Action<bool>,
     pub b_button_action: Action<bool>,
     pub b_touch_action: Action<bool>,
+    pub right_menu_button_action: Action<bool>,
     pub thumbstick_x_action: Action<f32>,
     pub thumbstick_y_action: Action<f32>,
     pub thumbstick_click_action: Action<bool>,
@@ -92,7 +93,7 @@ impl Input {
         let y_button_touch_path = instance
             .string_to_path("/user/hand/left/input/y/touch")
             .unwrap();
-        let menu_button_path = instance
+        let left_menu_button_path = instance
             .string_to_path("/user/hand/left/input/menu/click")
             .unwrap();
 
@@ -107,6 +108,10 @@ impl Input {
             .unwrap();
         let b_button_touch_path = instance
             .string_to_path("/user/hand/right/input/b/touch")
+            .unwrap();
+
+        let right_menu_button_path = instance
+            .string_to_path("/user/hand/left/input/menu/click")
             .unwrap();
 
         let left_hand_thumbstick_x_path = instance
@@ -183,8 +188,8 @@ impl Input {
         let y_button_action = action_set.create_action::<bool>("y_button", "Y Button", &[])?;
         let y_touch_action =
             action_set.create_action::<bool>("y_button_touch", "Y Button Touch", &[])?;
-        let menu_button_action =
-            action_set.create_action::<bool>("menu_button", "Menu Button", &[])?;
+        let left_menu_button_action =
+            action_set.create_action::<bool>("left_menu_button", "Left Menu Button", &[])?;
 
         let a_button_action = action_set.create_action::<bool>("a_button", "A Button", &[])?;
         let a_touch_action =
@@ -192,6 +197,8 @@ impl Input {
         let b_button_action = action_set.create_action::<bool>("b_button", "B Button", &[])?;
         let b_touch_action =
             action_set.create_action::<bool>("b_button_touch", "B Button Touch", &[])?;
+        let right_menu_button_action =
+            action_set.create_action::<bool>("right_menu_button", "Right Menu Button", &[])?;
 
         let thumbstick_x_action = action_set.create_action::<f32>(
             "thumbstick_x",
@@ -241,11 +248,12 @@ impl Input {
                 xr::Binding::new(&x_touch_action, x_button_touch_path),
                 xr::Binding::new(&y_button_action, y_button_path),
                 xr::Binding::new(&y_touch_action, y_button_touch_path),
-                xr::Binding::new(&menu_button_action, menu_button_path),
+                xr::Binding::new(&left_menu_button_action, left_menu_button_path),
                 xr::Binding::new(&a_button_action, a_button_path),
                 xr::Binding::new(&a_touch_action, a_button_touch_path),
                 xr::Binding::new(&b_button_action, b_button_path),
                 xr::Binding::new(&b_touch_action, b_button_touch_path),
+                xr::Binding::new(&right_menu_button_action, right_menu_button_path),
                 xr::Binding::new(&thumbstick_x_action, left_hand_thumbstick_x_path),
                 xr::Binding::new(&thumbstick_x_action, right_hand_thumbstick_x_path),
                 xr::Binding::new(&thumbstick_y_action, left_hand_thumbstick_y_path),
@@ -293,11 +301,12 @@ impl Input {
             x_touch_action,
             y_button_action,
             y_touch_action,
-            menu_button_action,
+            left_menu_button_action,
             a_button_action,
             a_touch_action,
             b_button_action,
             b_touch_action,
+            right_menu_button_action,
             thumbstick_x_action,
             thumbstick_y_action,
             thumbstick_click_action,

@@ -4,6 +4,7 @@ use ash::{
     Device, Entry as AshEntry, Instance as AshInstance,
 };
 
+use gilrs::{Button, Gilrs};
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
 use openxr_sys::{Action, Bool32, Path, Posef, SessionState, Space, Vector3f};
 use winit::event::KeyboardInput;
@@ -28,6 +29,14 @@ static A_INPUT: &str = "/user/hand/right/input/a/click";
 static B_INPUT: &str = "/user/hand/right/input/b/click";
 static X_INPUT: &str = "/user/hand/left/input/x/click";
 static Y_INPUT: &str = "/user/hand/left/input/y/click";
+
+static LEFT_MENU_INPUT: &str = "/user/hand/left/input/menu/click";
+static LEFT_SQUEEZE: &str = "/user/hand/left/input/squeeze/value";
+static LEFT_TRIGGER: &str = "/user/hand/left/input/trigger/value";
+
+static RIGHT_MENU_INPUT: &str = "/user/hand/right/input/menu/click";
+static RIGHT_SQUEEZE: &str = "/user/hand/right/input/squeeze/value";
+static RIGHT_TRIGGER: &str = "/user/hand/right/input/trigger/value";
 
 pub struct State {
     pub vulkan_entry: Option<AshEntry>,
@@ -74,6 +83,7 @@ pub struct State {
     pub last_frame_time: Instant,
     pub camera: Camera,
     pub action_state: ActionState,
+    pub gilrs: Gilrs,
 }
 
 #[derive(Default)]
@@ -85,6 +95,7 @@ pub struct Camera {
 impl Default for State {
     fn default() -> Self {
         State {
+            gilrs: Gilrs::new().unwrap(),
             camera: Camera::default(),
             vulkan_entry: None,
             vulkan_instance: None,
@@ -318,6 +329,55 @@ impl State {
     pub fn update_action_state(&mut self) {
         // Reset the state of all the inputs
         self.action_state.clear();
+        let mut gamepad_inputs = Vec::new();
+        while let Some(gilrs::Event { id, .. }) = self.gilrs.next_event() {
+            let pad = self.gilrs.gamepad(id);
+            // Left Controller
+            if pad.is_pressed(Button::West) {
+                gamepad_inputs.push(X_INPUT);
+            }
+
+            if pad.is_pressed(Button::North) {
+                gamepad_inputs.push(Y_INPUT);
+            }
+
+            if pad.is_pressed(Button::LeftTrigger) {
+                gamepad_inputs.push(LEFT_SQUEEZE);
+            }
+
+            if pad.is_pressed(Button::LeftTrigger2) {
+                gamepad_inputs.push(LEFT_TRIGGER);
+            }
+
+            if pad.is_pressed(Button::Select) {
+                gamepad_inputs.push(LEFT_MENU_INPUT);
+            }
+
+            // Right Controller
+            if pad.is_pressed(Button::East) {
+                gamepad_inputs.push(B_INPUT);
+            }
+
+            if pad.is_pressed(Button::South) {
+                gamepad_inputs.push(A_INPUT);
+            }
+
+            if pad.is_pressed(Button::RightTrigger) {
+                gamepad_inputs.push(RIGHT_SQUEEZE);
+            }
+
+            if pad.is_pressed(Button::RightTrigger2) {
+                gamepad_inputs.push(RIGHT_TRIGGER);
+            }
+
+            if pad.is_pressed(Button::Start) {
+                gamepad_inputs.push(RIGHT_MENU_INPUT);
+            }
+        }
+
+        for input in gamepad_inputs {
+            self.press(input);
+        }
 
         // Clone to get around mutate after borrow
         for pressed in &self.input_state.clone().pressed {
